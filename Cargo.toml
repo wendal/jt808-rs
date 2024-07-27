@@ -1,0 +1,16 @@
+[package]
+name = "jt808-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust for JT808 protocol"
+authors = ["Wendal Chen <wendal1985@gmail.com>"]
+categories = [
+    "embedded",
+    "no-std",
+]
+repository = "https://github.com/wendal/jt808-rs"
+license = "MIT"
+readme = "README.md"
+
+
+[dependencies]
