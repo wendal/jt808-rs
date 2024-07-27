@@ -3,83 +3,24 @@
 extern crate alloc;
 use alloc::vec::Vec;
 
-
-pub fn wrap_array(src: &[u8], dst: &mut [u8]) -> usize {
-    let mut i = 0;
-    dst[0] = 0x7E;
-    i+=1;
-    for val in src.iter() { 
-        if *val == 0x7E {
-            dst[i] = 0x7D;
-            dst[i+1] = 0x02;
-            i+=2;
-        }
-        else if *val == 0x7D {
-            dst[i] = 0x7D;
-            dst[i+1] = 0x01;
-            i+=2;
-        }
-        else {
-            dst[i] = *val;
-            i += 1;
-        }
-    }
-    dst[i] = 0x7E;
-    i
-}
-
-pub fn unwrap_array(src: &[u8], dst: &mut [u8]) -> usize {
-    let mut i = 0;
-    if src[0] != 0x7E {
-        return 0;
-    }
-    let mut mode = false;
-    for val in src.iter() { 
-        if *val == 0x7E {
-            break;
-        }
-        if *val == 0x7D {
-            mode = true;
-            continue;
-        }
-        else if mode {
-            if *val == 0x02 {
-                dst[i] = 0x7E;
-                mode = false;
-            }
-            else if *val == 0x01 {
-                dst[i] = 0x7D;
-                mode = false;
-            }
-            else {
-                return 0; // 非法数据
-            }
-        }
-        else {
-            dst[i] = *val;
-        }
-        i+=1;
-    }
-    i
-}
-
-
+/// 数据封包, 用于将数据包进行封装, 以便于传输
 pub fn wrap(src: Vec<u8>, dst: &mut Vec<u8>) -> usize {
     let mut result = 2;
     dst.push(0x7E);
     for val in src.iter() { 
-        if *val == 0x7E {
+        let tmp: u8 = *val;
+        if tmp == 0x7E {
             dst.push(0x7D);
             dst.push(0x02);
             result += 2;
         }
-        else if *val == 0x7D {
+        else if tmp == 0x7D {
             dst.push(0x7D);
             dst.push(0x01);
             result += 2;
         }
         else {
-            dst.push(val.clone());
+            dst.push(tmp);
             result += 1;
         }
     }
@@ -87,7 +28,7 @@ pub fn wrap(src: Vec<u8>, dst: &mut Vec<u8>) -> usize {
     result
 }
 
-
+/// 数据解包, 用于将数据包进行解封装, 以便于接收
 pub fn unwrap(src: Vec<u8>, dst: &mut Vec<u8>) -> usize {
     if src.len() < 3 {
         return 0;
@@ -185,6 +126,12 @@ mod tests {
         dst.clear();
         let result: usize = super::wrap(src, &mut dst);
         assert_eq!(result, 6);
+        assert_eq!(dst[0], 0x7E);
+        assert_eq!(dst[1], 0x12);
+        assert_eq!(dst[2], 0x34);
+        assert_eq!(dst[3], 0x56);
+        assert_eq!(dst[4], 0x78);
+        assert_eq!(dst[5], 0x7E);
 
         
         // 需转义的情况, 有 0x7E
@@ -193,6 +140,15 @@ mod tests {
         let result: usize = super::wrap(src, &mut dst);
         // println!(">>>>>>> {}", result);
         assert_eq!(result, 9);
+        assert_eq!(dst[0], 0x7E);
+        assert_eq!(dst[1], 0x12);
+        assert_eq!(dst[2], 0x34);
+        assert_eq!(dst[3], 0x56);
+        assert_eq!(dst[4], 0x78);
+        assert_eq!(dst[5], 0x7D);
+        assert_eq!(dst[6], 0x02);
+        assert_eq!(dst[7], 0x12);
+        assert_eq!(dst[8], 0x7E);
 
         // 需转义的情况, 有 0x7D
         let src: Vec<u8> = vec![0x12, 0x34, 0x56, 0x78, 0x7D, 0x12];
@@ -200,6 +156,15 @@ mod tests {
         let result: usize = super::wrap(src, &mut dst);
         // println!(">>>>>>> {}", result);
         assert_eq!(result, 9);
+        assert_eq!(dst[0], 0x7E);
+        assert_eq!(dst[1], 0x12);
+        assert_eq!(dst[2], 0x34);
+        assert_eq!(dst[3], 0x56);
+        assert_eq!(dst[4], 0x78);
+        assert_eq!(dst[5], 0x7D);
+        assert_eq!(dst[6], 0x01);
+        assert_eq!(dst[7], 0x12);
+        assert_eq!(dst[8], 0x7E);
 
         // 7E 和 7D 同时出现的情况
         let src: Vec<u8> = vec![0x7E, 0x34, 0x56, 0x78, 0x7D, 0x12];
@@ -207,6 +172,16 @@ mod tests {
         let result: usize = super::wrap(src, &mut dst);
         // println!(">>>>>>> {}", result);
         assert_eq!(result, 10);
+        assert_eq!(dst[0], 0x7E);
+        assert_eq!(dst[1], 0x7D);
+        assert_eq!(dst[2], 0x02);
+        assert_eq!(dst[3], 0x34);
+        assert_eq!(dst[4], 0x56);
+        assert_eq!(dst[5], 0x78);
+        assert_eq!(dst[6], 0x7D);
+        assert_eq!(dst[7], 0x01);
+        assert_eq!(dst[8], 0x12);
+        assert_eq!(dst[9], 0x7E);
 
     }
 }
