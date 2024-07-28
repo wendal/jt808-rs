@@ -50,6 +50,7 @@ impl TryFrom<Vec<u8>> for Base {
         // 协议层解包
         let mut dst: Vec<u8> = Vec::new();
         let size = unwrap(&src, &mut dst);
+        // println!("解包后数据>>> {:?}", dst);
         if size == 0 {
             return Err("invalid base message, data invaild")
         }
@@ -94,6 +95,7 @@ impl MsgInto for Base {
 
         // 协议层打包
         wrap(&dst, &mut tmp);
+        // println!("数据包内容>>> {:?}", tmp);
         tmp.len()
     }
 }
