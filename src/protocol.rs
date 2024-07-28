@@ -3,7 +3,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
 
-/// 数据封包(不添加校验位)
+/// 数据封包
 pub fn wrap(src: &Vec<u8>, dst: &mut Vec<u8>) -> usize {
     let mut result = 3;
     let mut crc = 0;
